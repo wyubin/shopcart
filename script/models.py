@@ -1,68 +1,54 @@
-from peewee import Model,CharField,TextField,ForeignKeyField,IntegerField,Proxy,DateTimeField,BooleanField
-db_proxy = Proxy()
+from peewee import Model,CharField,TextField,ForeignKeyField,IntegerField,DatabaseProxy,DateTimeField,BooleanField
+db_proxy = DatabaseProxy()
 
-tables = ['Species','Serotype','Ref','Region','Source','Segment','Host','Continent','Country','Date','Ncbispec','Ncbisero','Nt']
+tables = ['User','Order_info','Supplier','Item','Order_item','Bonus','Discount_rule','Discount_limit'],
 
 class Base(Model):
-	class Meta:
-		database = db_proxy
+    class Meta:
+        database = db_proxy
 
-class Species(Base):
-	name = CharField(unique=True)
+class User(Base):
+    name = CharField(unique=True)
 
-class Serotype(Base):
-	name = CharField(unique=True)
-	full_name = CharField(unique=True)
-	species = ForeignKeyField(Species, related_name='serotypes')
+class Order_info(Base):
+    sn = TextField(unique=True)
+    date = DateTimeField()
+    user = ForeignKeyField(User, backref='orders')
+    discount_ck = BooleanField()
+    discount_amount = IntegerField()
+    final_money = IntegerField()
 
-class Ref(Base):
-	ac = CharField(unique=True,null=True)
-	seq = TextField(null=True)
-	aa_seq = TextField(null=True)
-	serotype = ForeignKeyField(Serotype, related_name='refs')
+class Supplier(Base):
+    name = CharField(unique=True)
 
-class Region(Base):
-	name = CharField(unique=True)
+class Item(Base):
+    name = CharField(unique=True)
+    supplier = ForeignKeyField(Supplier, backref='items')
+    price = IntegerField()
 
-class Source(Base):
-	name = CharField(unique=True)
+class Order_item(Base):
+    order = ForeignKeyField(Order_info, backref='items')
+    item = ForeignKeyField(Item, backref='orders')
+    item_count = IntegerField()
 
-class Segment(Base):
-	ref = ForeignKeyField(Ref, related_name='segments')
-	region = ForeignKeyField(Region, related_name='segments')
-	source = ForeignKeyField(Source, related_name='segments')
-	start = IntegerField()
-	end = IntegerField()
-	aa_start = IntegerField(null=True)
-	aa_end = IntegerField(null=True)
+class Bonus(Base):
+    discount_money = IntegerField(null=True)
+    discount_percent = IntegerField(null=True)
+    free_item = ForeignKeyField(Item, backref='ref_bonus')
+    free_shipping = BooleanField()
 
-class Host(Base):
-	name = CharField(unique=True)
+class Discount_rule(Base):
+    min_count = IntegerField(null=True)
+    min_money = IntegerField(null=True)
+    sel_item = ForeignKeyField(Item, backref='ref_disc_rules', null=True)
+    sel_supplier = ForeignKeyField(Supplier, backref='ref_disc_rules', null=True)
+    bouns = ForeignKeyField(Bonus, backref='ref_disc_rules')
+    active = BooleanField()
 
-class Continent(Base):
-	name = CharField(unique=True)
-
-class Country(Base):
-	name = CharField(unique=True)
-	continent = ForeignKeyField(Continent, related_name='countries')
-
-class Date(Base):
-	date = DateTimeField()
-
-class Ncbispec(Base):
-	name = CharField(unique=True)
-
-class Ncbisero(Base):
-	name = CharField()
-	ncbispec = ForeignKeyField(Ncbispec, related_name='ncbiseros')
-
-class Nt(Base):
-	version = CharField(unique=True)
-	seq = TextField()
-	des = TextField()
-	ex_ref = BooleanField()
-	ref = ForeignKeyField(Ref, related_name='nts')
-	host = ForeignKeyField(Host, related_name='nts')
-	country = ForeignKeyField(Country, related_name='nts')
-	date = ForeignKeyField(Date, related_name='nts', null=True)
-	ncbisero = ForeignKeyField(Ncbisero, related_name='nts', null=True)
+class Discount_limit(Base):
+    max_money = IntegerField(null=True)
+    max_time = IntegerField(null=True)
+    by_user = BooleanField()
+    by_month = BooleanField()
+    date_start = DateTimeField(null=True)
+    date_end = DateTimeField(null=True)
