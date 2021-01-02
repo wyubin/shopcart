@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  shopcart:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+      labels:
+        commit: ${commit:-NA}
+    image: yubin0611/shopcart:v0.0.1
+    container_name: shopcart
+    volumes:
+      - /tmp:/tmp
+      - /etc/localtime:/etc/localtime:ro
+    command: tail -F anything
