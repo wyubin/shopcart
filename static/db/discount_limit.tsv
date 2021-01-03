@@ -1,0 +1,5 @@
+max_money	max_time	by_user	by_month	date_start	date_end	active
+10000		0	0		20210301	1
+100		1	0			1
+	10	0	1		20210331	0
+		0	0		20210701	0

@@ -10,4 +10,14 @@ git clone git@github.com:wyubin/shopcart.git
 ## 啟動安裝程式
 sh shopcart/docker/install.sh
 ## 進入 container 中執行程式
+docker exec -it shopcart ash
+```
+
+## Example
+
+```sh
+## DB initiate
+python ./shopcart.py --init
+## start...
+python ./shopcart.py --user joe
 ```

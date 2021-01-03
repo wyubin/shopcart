@@ -1,0 +1,5 @@
+min_count	min_money	sel_item	sel_supplier	bonus	active
+5				pct_5	1
+	200			money_5	1
+2		itemA		gift_a	1
+	100		s2	free_ship	1

@@ -1,0 +1,5 @@
+name	discount_money	discount_percent	free_item	free_shipping
+free_ship	0	0		1
+money_5	5	0		0
+pct_5	0	5		0
+gift_a	0	0	itemA	0
