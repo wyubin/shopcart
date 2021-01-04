@@ -27,10 +27,9 @@ class pkg():
         self.vars['pathDB'] = os.path.join(dirTool,self.config['pathDB'])
 
     def main(self):
-        if self.args.get('init'):
+        if self.args.get('init') or not os.path.exists(self.vars['pathDB']):
             db_init.init(self.vars['pathDB'])
         
-        #md.db_proxy.initialize(SqliteDatabase(self.vars['pathDB']))
         if not self.args.get('user'):
             sys.stderr.write('[WARN] Please input user name\n')
             sys.exit(0)
@@ -45,6 +44,8 @@ class pkg():
             strFunc = input("input item id | Edit ShopCart(s) | Checkout(c) | Quit(q): ")
             if strFunc == 'q':
                 views.leave()
+            elif strFunc == 's':
+                views.eCart_enter()
             elif strFunc.isdigit():
                 views.addItem(int(strFunc))
             
