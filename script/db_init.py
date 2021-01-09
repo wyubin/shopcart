@@ -35,7 +35,6 @@ def init_orderInfo(pathTable):
         md.Order_info.insert(
             user=user,
             date=dt,
-            discount_amount = int(dataTmp['discount_amount']),
             final_money = int(dataTmp['final_money']),
             sn=dataTmp['sn']
         ).execute()
@@ -94,6 +93,7 @@ def init_order_bonus(pathTable):
         md.Order_bonus.insert(
             order=order,
             bonus=bonus,
+            discount_amount = int(dataTmp['discount_amount']),
         ).execute()
         tCount += 1
     sys.stderr.write('[INFO] Insert {} records in Order_bonus\n'.format(tCount))
@@ -109,12 +109,15 @@ def init_discount_rule(pathTable):
         listBonus = md.Bonus.select().where(md.Bonus.name == dataTmp['bonus'])
         bonus = listBonus[0] if listBonus else None
         md.Discount_rule.insert(
+            name=dataTmp['name'],
             min_count=int(dataTmp['min_count']) if dataTmp['min_count'] else None,
             min_money=int(dataTmp['min_money']) if dataTmp['min_money'] else None,
             sel_item=sel_item,
             sel_supplier=sel_supplier,
             bonus=bonus,
-            active=bool(int(dataTmp['active'])),
+            date_start=datetime.strptime(dataTmp['date_start'],_fmtDate) if dataTmp['date_start'] else None,
+            date_end=datetime.strptime(dataTmp['date_end'],_fmtDate) if dataTmp['date_end'] else None,
+            priority=int(dataTmp['priority']),
         ).execute()
         tCount += 1
     sys.stderr.write('[INFO] Insert {} records in Discount_rule\n'.format(tCount))
@@ -124,16 +127,27 @@ def init_discount_limit(pathTable):
     tCount = 0
     for dataTmp in aData:
         md.Discount_limit.insert(
+            name=dataTmp['name'],
             max_money=int(dataTmp['max_money']) if dataTmp['max_money'] else None,
             max_time=int(dataTmp['max_time']) if dataTmp['max_time'] else None,
             by_user=bool(int(dataTmp['by_user'])),
             by_month=bool(int(dataTmp['by_month'])),
-            date_start=datetime.strptime(dataTmp['date_start'],_fmtDate) if dataTmp['date_start'] else None,
-            date_end=datetime.strptime(dataTmp['date_end'],_fmtDate) if dataTmp['date_end'] else None,
-            active=bool(int(dataTmp['active'])),
         ).execute()
         tCount += 1
     sys.stderr.write('[INFO] Insert {} records in Discount_limit\n'.format(tCount))
+
+def init_rule_limits(pathTable):
+    aData = table2list(pathTable)
+    tCount = 0
+    for dataTmp in aData:
+        rule = md.Discount_rule.select().where(md.Discount_rule.name == dataTmp['rule'])[0]
+        limit = md.Discount_limit.select().where(md.Discount_limit.name == dataTmp['limit'])
+        md.Rule_limits.insert(
+            rule=rule,
+            limit=limit,
+        ).execute()
+        tCount += 1
+    sys.stderr.write('[INFO] Insert {} records in rule_limits\n'.format(tCount))
 
 def init(pathDB):
     md.db_proxy.initialize(SqliteDatabase(pathDB))
@@ -160,6 +174,9 @@ def init(pathDB):
     pathTmp = os.path.join(dirDB,'discount_limit.tsv')
     if os.path.exists(pathTmp):
         init_discount_limit(pathTmp)
+    pathTmp = os.path.join(dirDB,'rule_limits.tsv')
+    if os.path.exists(pathTmp):
+        init_rule_limits(pathTmp)
 
     md.db_proxy.close()
     sys.stderr.write('[INFO] Database initiation complete\n')

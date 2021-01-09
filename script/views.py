@@ -1,9 +1,10 @@
 "use models.py to return data for shopcart.py"
-import os,sys
+import sys
 from datetime import date
 from peewee import SqliteDatabase,fn
 from prettytable import PrettyTable
 import models as md
+import discount
 
 conf = {}
 
@@ -14,6 +15,7 @@ def init(pathDB):
 def ckUser(nameUser):
     listUser = md.User.select().where(md.User.name == nameUser)
     if listUser:
+        discount.init(md,listUser[0])
         return listUser[0]
     ## create user
     countLoop=0
@@ -23,6 +25,7 @@ def ckUser(nameUser):
             return False
         elif ck_create=='y':
             user = md.User.create(name=nameUser)
+            discount.init(md,user)
             return user
         countLoop += 1
     return False
@@ -47,7 +50,7 @@ def showItem():
 def addItem(item_id):
     itemSel,countCart = ckItemCart(item_id)
     if countCart:
-        sys.stderr.write('[INFO] "{}" in Cart by {} number\n'.format(itemSel.name, conf['item2count'][itemSel.id]))
+        sys.stderr.write('[INFO] "{}" in Cart by {} number\n'.format(itemSel.name, conf['item2count'][itemSel.id][-1]))
     countLoop=0
     while countLoop<3:
         if not itemSel:
@@ -78,7 +81,7 @@ def eCart_editNumber(objItem,countItem):
         if strCk=='n':
             return False
         elif strCk=='y':
-            conf['item2count'].update({objItem.id:countItem})
+            conf['item2count'].update({objItem.id:[objItem,countItem]})
             showCart()
             return True
         countLoop += 1
@@ -91,7 +94,7 @@ def ckItemCart(idItem):
     if not listItem:
         sys.stderr.write('[WARN] no "{}" item id\n'.format(idItem))
         return None,None
-    return listItem[0],conf['item2count'].get(idItem,0)
+    return listItem[0],conf['item2count'].get(idItem,[None,0])[-1]
 
 def eCart_enter():
     if not conf['item2count']:
@@ -155,9 +158,38 @@ def showCart():
     ## show content
     x = PrettyTable()
     x.field_names = ["id","name","supplier","price",'count','summary']
-    for idItem,countItem in conf['item2count'].items():
-        itemTmp = md.Item.get(idItem)
+    for itemTmp,countItem in conf['item2count'].values():
         sumTmp = itemTmp.price*countItem
         x.add_row([itemTmp.id,itemTmp.name,itemTmp.supplier.name,itemTmp.price,countItem,sumTmp])
     print(x.get_string())
-    return True
+    listDiscount,moneyFinal = discount.count(conf['item2count'])
+    showDiscount(listDiscount,moneyFinal)
+    return listDiscount
+
+def showDiscount(listDiscount,moneyFinal):
+    sys.stdout.write('[INFO] Apply {} discount: {}\n'.format(len(listDiscount), ' ,'.join(['{}({})'.format(x[0].name,x[-1]) for x in listDiscount])))
+    sys.stdout.write('[INFO] Checkout amount: {}\n'.format(moneyFinal))
+
+def checkout():
+    ckCart = showCart()
+    if ckCart == False:
+        return False
+    countLoop=0
+    while countLoop<3:
+        strCk = input("Confirm check out the Cart(y/n): ")
+        if strCk=='n':
+            return False
+        elif strCk=='y':
+            sn_checkout = discount.checkout(conf['item2count'],ckCart)
+            if type(sn_checkout) == str:
+                sys.stderr.write('[INFO] Keep our serial number:{}\n'.format(sn_checkout))
+                return True
+            else:
+                ckCart = sn_checkout[0]
+                sys.stderr.write('[WARN] Discount changed, please check again!\n')
+                showDiscount(*sn_checkout)
+                continue
+        sys.stderr.write('[WARN] Error Operation!\n')
+        countLoop += 1
+    sys.stderr.write('[INFO] Do not check out the Cart!\n')
+    return False

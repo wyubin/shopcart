@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 # coding=utf-8
 import os,sys,json
-from peewee import SqliteDatabase,fn
-import models as md
 import db_init
 import views
 
@@ -39,16 +37,26 @@ class pkg():
         if not user:
             views.leave()
         ## start
-        while 1:
+        countLoop=0
+        while countLoop<3:
             views.showItem()
             strFunc = input("input item id | Edit ShopCart(s) | Checkout(c) | Quit(q): ")
             if strFunc == 'q':
                 views.leave()
             elif strFunc == 's':
                 views.eCart_enter()
+                countLoop=0
+            elif strFunc == 'c':
+                views.checkout()
+                countLoop=0
             elif strFunc.isdigit():
                 views.addItem(int(strFunc))
-            
+                countLoop=0
+            else:
+                countLoop += 1
+        sys.stderr.write('[WARN] Error Operation more than 3 times!!\n')
+        views.leave()
+
 
 if __name__ == '__main__':
     import argparse

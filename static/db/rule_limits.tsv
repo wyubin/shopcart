@@ -1,0 +1,4 @@
+rule	limit
+min200	user100
+2A	month10t
+min5t	max10k
