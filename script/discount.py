@@ -29,7 +29,7 @@ def ckLimit(rule,moneyDiscount):
         if limitTmp.by_month:
             queryTmp = queryTmp.where(conf['md'].Order_info.date.month == now.month)
         discountDB,timeDB = sum([x.discount_amount for x in queryTmp]), len(queryTmp)
-        #sys.stderr.write('[INFO] Limit:"{}", discountDB: {}({}), timeDB: {}({})\n'.format(limitTmp.name,+moneyDiscount,limitTmp.max_money,timeDB+1,limitTmp.max_time))
+        sys.stderr.write('[INFO] Limit:"{}", discountDB: {}({}), timeDB: {}({})\n'.format(limitTmp.name,discountDB+moneyDiscount,limitTmp.max_money,timeDB+1,limitTmp.max_time))
         ## return False if one ck
         if limitTmp.max_money and discountDB+moneyDiscount >  limitTmp.max_money:
             sys.stderr.write('[INFO] Discount({}) exceed max_money({}), "{}" discount can not apply!\n'.format(discountDB+moneyDiscount,limitTmp.max_money,rule.name))

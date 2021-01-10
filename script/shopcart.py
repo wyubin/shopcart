@@ -36,11 +36,12 @@ class pkg():
         user = views.ckUser(self.args['user'])
         if not user:
             views.leave()
+        #views.conf['user'] = user
         ## start
         countLoop=0
         while countLoop<3:
             views.showItem()
-            strFunc = input("input item id | Edit ShopCart(s) | Checkout(c) | Quit(q): ")
+            strFunc = input("input item id | Edit ShopCart(s) | Checkout(c) | checkOrders(l) | Quit(q): ")
             if strFunc == 'q':
                 views.leave()
             elif strFunc == 's':
@@ -48,6 +49,9 @@ class pkg():
                 countLoop=0
             elif strFunc == 'c':
                 views.checkout()
+                countLoop=0
+            elif strFunc == 'l':
+                views.showOrders(user)
                 countLoop=0
             elif strFunc.isdigit():
                 views.addItem(int(strFunc))

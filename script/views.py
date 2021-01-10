@@ -6,6 +6,8 @@ from prettytable import PrettyTable
 import models as md
 import discount
 
+_fmtTime = '%Y%m%d%H%M'
+
 conf = {}
 
 def init(pathDB):
@@ -156,6 +158,7 @@ def showCart():
         sys.stderr.write('[INFO] Cart is empty!\n')
         return False
     ## show content
+    sys.stdout.write('Menu:\n')
     x = PrettyTable()
     x.field_names = ["id","name","supplier","price",'count','summary']
     for itemTmp,countItem in conf['item2count'].values():
@@ -183,6 +186,8 @@ def checkout():
             sn_checkout = discount.checkout(conf['item2count'],ckCart)
             if type(sn_checkout) == str:
                 sys.stderr.write('[INFO] Keep our serial number:{}\n'.format(sn_checkout))
+                ## clean 
+                conf['item2count'] = {}
                 return True
             else:
                 ckCart = sn_checkout[0]
@@ -193,3 +198,48 @@ def checkout():
         countLoop += 1
     sys.stderr.write('[INFO] Do not check out the Cart!\n')
     return False
+
+def showOrders(user=None):
+    countLoop=0
+    queryTmp = md.Order_info.select()
+    if user:
+       queryTmp = queryTmp.where(user==user)
+    lenOrder = queryTmp.count()
+    if not lenOrder:
+        sys.stderr.write('[WARN] no associated sn!\n')
+    while countLoop<3:
+        showOrderInfos(queryTmp)
+        strID = input("Input rawID that you want to check: ")
+        if strID.isdigit() and int(strID)<= lenOrder:
+            showOrderSN(queryTmp[int(strID)-1])
+            return True
+        countLoop +=1
+    sys.stderr.write('[INFO] Back to homepage!\n')
+    return False
+
+def showOrderInfos(qOrderInfo):
+    x = PrettyTable()
+    x.field_names = ["rawID","User","date","checkout money","sn"]
+    countTmp = 0
+    for fetchTmp in qOrderInfo:
+        countTmp += 1
+        x.add_row([countTmp,fetchTmp.user.name, fetchTmp.date.strftime(_fmtTime),fetchTmp.final_money, fetchTmp.sn])
+    print(x.get_string())
+
+def showOrderSN(objOrder):
+    sys.stderr.write('[INFO] Order on {} by {} money.\n'.format(objOrder.date.strftime(_fmtTime), objOrder.final_money))
+    sys.stdout.write('Items:\n')
+    x = PrettyTable()
+    x.field_names = ["name","supplier","price",'count','summary']
+    for itemTmp in objOrder.items:
+        objItem = itemTmp.item
+        x.add_row([objItem.name, objItem.supplier, objItem.price, itemTmp.item_count, objItem.price*itemTmp.item_count])
+    print(x.get_string())
+
+    sys.stdout.write('Discounts:\n')
+    x = PrettyTable()
+    x.field_names = ["name","discount_amount"]
+    for bonusTmp in objOrder.sets_bonus:
+        objItem = itemTmp.item
+        x.add_row([bonusTmp.bonus.name, bonusTmp.discount_amount])
+    print(x.get_string())
